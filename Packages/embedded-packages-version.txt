@@ -1,0 +1,1 @@
+com.unity.collections, com.unity.entries and com.unity.jobs copied from https://github.com/Unity-Technologies/dots/tree/902c57204e21fb62bf188fa00f6f77b1bdf1b527/Samples/Packages
