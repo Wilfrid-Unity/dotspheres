@@ -16,6 +16,7 @@ public class SphereSpawnerSystem : Unity.Entities.JobComponentSystem
     }
 
     static readonly public Unity.Mathematics.float3 InitialSphereSpeed = new Unity.Mathematics.float3(0, 0, .1F);
+    static Unity.Mathematics.Random InitialSpeedRandom = new Unity.Mathematics.Random(0x6E624EB7u);
 
     struct SpawnSphereJob : Unity.Entities.IJobProcessComponentData<SphereSpawnerData>
     {
@@ -29,13 +30,16 @@ public class SphereSpawnerSystem : Unity.Entities.JobComponentSystem
             // Place the instance in a grid
             float x = sphereSpawnedIndex / 10;
             float z = sphereSpawnedIndex % 10;
-            const float spaceBetweenSpheres = 1.2F;
-            var position = new Unity.Mathematics.float3(spaceBetweenSpheres * x, 0, spaceBetweenSpheres * z);
+            const float spaceBetweenSpheres = 0.9F;
+            var position = new Unity.Mathematics.float3(-8 + spaceBetweenSpheres * x, 0, -8 + spaceBetweenSpheres * z);
             commandBuffer.SetComponent(sphereInstance, new Unity.Transforms.Translation { Value = position });
 
-            // set initial speed
-            commandBuffer.SetComponent(sphereInstance, new SphereSpeedData { entitySpeed = InitialSphereSpeed });
+            //commandBuffer.SetComponent(sphereInstance, new SphereSpeedData { entitySpeed = InitialSphereSpeed });
+            // set random initial speed
+            var random = new Unity.Mathematics.Random(0x6E624EB7u);
+            commandBuffer.SetComponent(sphereInstance, new SphereSpeedData { entitySpeed = .1F * InitialSpeedRandom.NextFloat3(-1F, 1F) });
 
+            commandBuffer.SetComponent(sphereInstance, new SphereRadiusData { entityRadius = 1F });
         }
     }
 
