@@ -17,7 +17,9 @@ public class SphereSpawnerSystem : Unity.Entities.JobComponentSystem
 
     static readonly public Unity.Mathematics.float3 InitialSphereSpeed = new Unity.Mathematics.float3(0, 0, .1F);
     static Unity.Mathematics.Random InitialSpeedRandom = new Unity.Mathematics.Random(0x6E624EB7u);
+    static Unity.Mathematics.Random InitialPositionRandom = new Unity.Mathematics.Random(0x3F450AC8u);
 
+    //[Unity.Burst.BurstCompile] // Unity.Mathematics.Random* is not supported
     struct SpawnSphereJob : Unity.Entities.IJobProcessComponentData<SphereSpawnerData>
     {
         public Unity.Entities.EntityCommandBuffer commandBuffer;
@@ -27,19 +29,15 @@ public class SphereSpawnerSystem : Unity.Entities.JobComponentSystem
         {
             var sphereInstance = commandBuffer.Instantiate(spawnerData.spherePrefabEntity);
 
-            // Place the instance in a grid
-            float x = sphereSpawnedIndex / 10;
-            float z = sphereSpawnedIndex % 10;
-            const float spaceBetweenSpheres = 0.9F;
-            var position = new Unity.Mathematics.float3(-8 + spaceBetweenSpheres * x, 0, -8 + spaceBetweenSpheres * z);
-            commandBuffer.SetComponent(sphereInstance, new Unity.Transforms.Translation { Value = position });
+            Unity.Mathematics.float3 xz = InitialPositionRandom.NextFloat3(-8F, 8F);
+            float y = InitialPositionRandom.NextFloat(-4F, 4F);
+            commandBuffer.SetComponent(sphereInstance, new Unity.Transforms.Translation { Value = new Unity.Mathematics.float3(xz.x, y, xz.z) });
 
-            //commandBuffer.SetComponent(sphereInstance, new SphereSpeedData { entitySpeed = InitialSphereSpeed });
-            // set random initial speed
-            var random = new Unity.Mathematics.Random(0x6E624EB7u);
-            commandBuffer.SetComponent(sphereInstance, new SphereSpeedData { entitySpeed = .1F * InitialSpeedRandom.NextFloat3(-1F, 1F) });
+            commandBuffer.SetComponent(sphereInstance, new SphereSpeedData { entitySpeed = .2F * Unity.Mathematics.math.normalize( InitialSpeedRandom.NextFloat3(-1F, 1F)) });
 
             commandBuffer.SetComponent(sphereInstance, new SphereRadiusData { entityRadius = 1F });
+
+            commandBuffer.SetComponent(sphereInstance, new SphereSpawnedIndexData { entitySpawnedIndex = sphereSpawnedIndex });
         }
     }
 
@@ -50,8 +48,8 @@ public class SphereSpawnerSystem : Unity.Entities.JobComponentSystem
 
         // "spawn jobs" update
         ++framesSkipped;
-        // every 2 frames, schedule a SpawnSphereJob (stop after 100 spheres)
-        if (framesSkipped >= 2 && spheresSpawnedCount < 100)
+        // every 7 frames, schedule a SpawnSphereJob (stop after 100 spheres)
+        if (framesSkipped >= 7 && spheresSpawnedCount < 100)
         {
             var spawnSphereJob = new SpawnSphereJob
             {
